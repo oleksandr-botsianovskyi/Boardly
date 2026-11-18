@@ -1,11 +1,11 @@
 // use prisma-8
 
 model User {
-  id        Int                @id @default(autoincrement())
+  id        Uuid               @id @onCreate(uuid(7))
   email     String             @unique
   username  String?
   name      String?
-  createdAt DateTime           @default(now()) @onCreate(now())
+  createdAt DateTime           @default(now()) 
   updatedAt temporal.UpdatedAt
 }
 
