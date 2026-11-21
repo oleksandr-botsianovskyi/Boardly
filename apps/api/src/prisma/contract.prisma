@@ -1,11 +1,61 @@
 // use prisma-8
-
 model User {
-  id        Uuid               @id @onCreate(uuid(7))
-  email     String             @unique
-  username  String?
-  name      String?
-  createdAt DateTime           @default(now()) 
-  updatedAt temporal.UpdatedAt
+  id            Uuid               @id @onCreate(uuid(7))
+  email         String             @unique
+  username      String?
+  name          String?
+  createdAt     DateTime           @default(now())
+  updatedAt     temporal.UpdatedAt
+
+  createdTasks  Task[]             @relation("TaskCreator")
+  reviewedTasks Task[]             @relation("TaskReviewer")
+  assignedTasks Task[]             @relation("TaskAssignee")
+  ownedBoards   Board[]            @relation("BoardOwner")
 }
 
+model Board {
+  id        Uuid               @id @onCreate(uuid(7))
+  title     String
+  createdAt DateTime           @default(now())
+  updatedAt temporal.UpdatedAt
+
+  ownerId   Uuid
+
+  columns   Column[]           @relation("BoardColumns")
+  owner     User               @relation("BoardOwner", fields: [ownerId], references: [id])
+}
+
+model Column {
+  id       Uuid   @id @onCreate(uuid(7))
+  title    String
+  position Int
+  boardId  Uuid
+
+  board    Board  @relation("BoardColumns", fields: [boardId], references: [id], onDelete: Cascade)
+
+  tasks    Task[] @relation("ColumnTasks")
+}
+
+model Task {
+  id          Uuid               @id @onCreate(uuid(7))
+  title       String
+  description String?
+  createdAt   DateTime           @default(now())
+  updatedAt   temporal.UpdatedAt
+
+  createdById Uuid
+  reviewerId  Uuid?
+  assigneeId  Uuid?
+  columnId    Uuid
+  position    Int                @default(0)
+
+  createdBy   User               @relation("TaskCreator", fields: [createdById], references: [id])
+
+  reviewer    User?              @relation("TaskReviewer", fields: [reviewerId], references: [id])
+
+  assignee    User?              @relation("TaskAssignee", fields: [assigneeId], references: [id])
+
+  column      Column             @relation("ColumnTasks", fields: [columnId], references: [id], onDelete: Cascade)
+
+  @@index([columnId, position])
+}
