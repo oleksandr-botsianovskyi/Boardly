@@ -3,6 +3,7 @@ import { createObserveModule } from '@nestjs/observe';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { UserModule } from './user/user.module.js';
 import { TaskModule } from './task/task.module.js';
+import { BoardModule } from './board/board.module.js';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -19,6 +20,7 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     PrismaModule,
     UserModule,
     TaskModule,
+    BoardModule,
   ],
 })
 export class AppModule {}
