@@ -6,8 +6,8 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import { stat } from 'fs';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
+import { mapPostgresException } from '../exception-mappers/postgres-exception.mapper.js';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -18,15 +18,38 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    const status =
+    const mappedException =
       exception instanceof HttpException
-        ? exception.getStatus()
-        : HttpStatus.INTERNAL_SERVER_ERROR;
+        ? exception
+        : mapPostgresException(exception);
 
-    const message =
-      exception instanceof HttpException
-        ? exception.message
-        : 'Internal server error';
+    const status = mappedException
+      ? mappedException.getStatus()
+      : HttpStatus.INTERNAL_SERVER_ERROR;
+
+    let message: string | string[] = 'Internal server error';
+    let error = 'Internal Server Error';
+
+    if (mappedException) {
+      const body = mappedException.getResponse();
+
+      if (typeof body === 'string') {
+        message = body;
+      } else {
+        const responseBody = body as Record<string, unknown>;
+
+        if (
+          typeof responseBody.message === 'string' ||
+          Array.isArray(responseBody.message)
+        ) {
+          message = responseBody.message as string | string[];
+        }
+
+        if (typeof responseBody.error === 'string') {
+          error = responseBody.error;
+        }
+      }
+    }
 
     if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
       this.logger.error(
@@ -37,6 +60,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     response.status(status).json({
       statusCode: status,
       message,
+      error,
       timestamp: new Date().toISOString(),
       path: request.url,
     });
