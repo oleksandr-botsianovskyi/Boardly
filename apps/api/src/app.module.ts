@@ -4,6 +4,8 @@ import { PrismaModule } from './prisma/prisma.module.js';
 import { UserModule } from './user/user.module.js';
 import { TaskModule } from './task/task.module.js';
 import { BoardModule } from './board/board.module.js';
+import { APP_FILTER } from '@nestjs/core';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter.js';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -22,5 +24,6 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     TaskModule,
     BoardModule,
   ],
+  providers: [{ provide: APP_FILTER, useClass: HttpExceptionFilter }],
 })
 export class AppModule {}
